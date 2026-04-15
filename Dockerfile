@@ -1,9 +1,15 @@
+# Estágio 1: Build do React/Vite
+FROM node:18-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Estágio 2: Servir com Nginx
 FROM nginx:alpine
-# Copia o seu arquivo html para a pasta que o Nginx usa
-COPY index.html /usr/share/nginx/html/index.html
-# Expõe a porta 8080 (que o Cloud Run exige)
+# O Vite coloca os arquivos prontos na pasta /dist
+COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8080
-# Configura o Nginx para rodar na porta 8080 em vez da 80
 RUN sed -i 's/listen       80;/listen       8080;/g' /etc/nginx/conf.d/default.conf
 CMD ["nginx", "-g", "daemon off;"]
-
