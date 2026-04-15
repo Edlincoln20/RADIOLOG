@@ -1,0 +1,199 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: monitoring
+// Fields:
+//   - timestamp: string (ISO 8601)
+//   - temperature: number
+//   - pressure: number
+//   - heliumLevel: number
+//   - humidityTechnicalRoom: number
+//   - humidityExamRoom: number
+//   - machineId: string
+//   - authorUid: string
+//
+// Collection: maintenance
+// Fields:
+//   - type: string (Preventiva, Corretiva)
+//   - date: string (ISO 8601)
+//   - description: string
+//   - status: string (Pendente, Concluída)
+//   - machineId: string
+//   - observations: string (optional)
+//   - imageUrl: string (optional)
+//   - authorUid: string
+//
+// Collection: reports
+// Fields:
+//   - date: string (ISO 8601)
+//   - author: string
+//   - authorUid: string
+//   - title: string
+//   - content: string
+//   - machineId: string
+//
+// Collection: sector_observations
+// Fields:
+//   - text: string
+//   - user: string
+//   - authorUid: string
+//   - timestamp: string (ISO 8601)
+//
+// Collection: users
+// Fields:
+//   - name: string
+//   - email: string
+//   - role: string (admin, gestor, operador, tecnico_manutencao)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "nlocnilde@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}.*");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidMonitoring(data) {
+      return hasRequiredFields([
+        'timestamp', 
+        'heliumLevel', 
+        'heliumPressure', 
+        'tempTechnicalRoom', 
+        'tempExamRoom', 
+        'humidityTechnicalRoom',
+        'humidityExamRoom',
+        'waterFlow', 
+        'waterTemp', 
+        'compressorPressure', 
+        'machineId', 
+        'authorUid'
+      ]) &&
+      data.heliumLevel is number &&
+      data.heliumPressure is number &&
+      data.tempTechnicalRoom is number &&
+      data.tempExamRoom is number &&
+      data.humidityTechnicalRoom is number &&
+      data.humidityExamRoom is number &&
+      data.waterFlow is number &&
+      data.waterTemp is number &&
+      data.compressorPressure is number &&
+      data.machineId is string &&
+      data.authorUid == request.auth.uid;
+    }
+
+    function isValidMaintenance(data) {
+      return hasRequiredFields(['type', 'date', 'description', 'status', 'machineId', 'authorUid']) &&
+             data.type in ['Preventiva', 'Corretiva'] &&
+             data.status in ['Pendente', 'Concluída'] &&
+             data.authorUid == request.auth.uid &&
+             (!('imageUrl' in data) || isValidUrl(data.imageUrl));
+    }
+
+    function isValidReport(data) {
+      return hasRequiredFields(['date', 'author', 'authorUid', 'title', 'content', 'machineId']) &&
+             data.authorUid == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 5000;
+    }
+
+    function isValidSectorObservation(data) {
+      return hasRequiredFields(['text', 'user', 'authorUid', 'timestamp']) &&
+             data.authorUid == request.auth.uid &&
+             data.text is string && data.text.size() > 0 && data.text.size() < 1000;
+    }
+
+    function isValidCalendarNote(data) {
+      return hasRequiredFields(['date', 'content', 'authorName', 'authorUid', 'timestamp']) &&
+             data.authorUid == request.auth.uid &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 2000 &&
+             (!('isMaintenance' in data) || data.isMaintenance is bool);
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['name', 'email', 'role']) &&
+             data.role in ['admin', 'gestor', 'operador', 'tecnico_manutencao', 'administrativo', 'enfermagem'] &&
+             isValidEmail(data.email);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role != 'admin';
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role;
+      allow write: if isAdmin();
+    }
+
+    match /monitoring/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMonitoring(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /maintenance/{taskId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMaintenance(request.resource.data);
+      allow update: if isAuthenticated() && isValidMaintenance(request.resource.data) && (resource.data.authorUid == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidReport(request.resource.data);
+      allow update: if isAuthenticated() && isValidReport(request.resource.data) && request.resource.data.authorUid == resource.data.authorUid;
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.authorUid == request.auth.uid);
+    }
+
+    match /sector_observations/{obsId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSectorObservation(request.resource.data);
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.authorUid == request.auth.uid);
+    }
+
+    match /calendar_notes/{noteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidCalendarNote(request.resource.data);
+      allow update: if isAuthenticated() && isValidCalendarNote(request.resource.data) && request.resource.data.authorUid == resource.data.authorUid;
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.authorUid == request.auth.uid);
+    }
+  }
+}

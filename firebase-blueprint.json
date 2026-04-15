@@ -1,0 +1,131 @@
+{
+  "entities": {
+    "MonitoringLog": {
+      "title": "MonitoringLog",
+      "description": "Registros técnicos de hélio, temperaturas de salas e sistema de água.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "heliumLevel": { "type": "number" },
+        "heliumPressure": { "type": "number" },
+        "tempTechnicalRoom": { "type": "number" },
+        "tempExamRoom": { "type": "number" },
+        "humidityTechnicalRoom": { "type": "number" },
+        "humidityExamRoom": { "type": "number" },
+        "waterFlow": { "type": "number" },
+        "waterTemp": { "type": "number" },
+        "compressorPressure": { "type": "number" },
+        "machineId": { "type": "string" },
+        "authorUid": { "type": "string" }
+      },
+      "required": [
+        "timestamp", 
+        "heliumLevel", 
+        "heliumPressure", 
+        "tempTechnicalRoom", 
+        "tempExamRoom", 
+        "humidityTechnicalRoom",
+        "humidityExamRoom",
+        "waterFlow", 
+        "waterTemp", 
+        "compressorPressure", 
+        "machineId", 
+        "authorUid"
+      ]
+    },
+    "MaintenanceTask": {
+      "title": "MaintenanceTask",
+      "description": "Tarefas de manutenção preventiva ou corretiva.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["Preventiva", "Corretiva"] },
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pendente", "Concluída"] },
+        "machineId": { "type": "string" },
+        "observations": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "authorUid": { "type": "string" }
+      },
+      "required": ["type", "date", "description", "status", "machineId", "authorUid"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Relatórios e observações do setor.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "author": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "machineId": { "type": "string" }
+      },
+      "required": ["date", "author", "authorUid", "title", "content", "machineId"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil do usuário no sistema.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "gestor", "operador", "tecnico_manutencao", "administrativo", "enfermagem"] }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "CalendarNote": {
+      "title": "CalendarNote",
+      "description": "Observações diárias vinculadas ao calendário.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "authorName": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "isMaintenance": { "type": "boolean" }
+      },
+      "required": ["date", "content", "authorName", "authorUid", "timestamp"]
+    },
+    "SectorObservation": {
+      "title": "SectorObservation",
+      "description": "Observações rápidas do setor.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "user": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "user", "authorUid", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/monitoring": {
+      "schema": "MonitoringLog",
+      "description": "Coleção de logs de monitoramento."
+    },
+    "/maintenance": {
+      "schema": "MaintenanceTask",
+      "description": "Coleção de tarefas de manutenção."
+    },
+    "/reports": {
+      "schema": "Report",
+      "description": "Coleção de relatórios."
+    },
+    "/users": {
+      "schema": "UserProfile",
+      "description": "Coleção de perfis de usuários."
+    },
+    "/calendar_notes": {
+      "schema": "CalendarNote",
+      "description": "Coleção de observações diárias do calendário."
+    },
+    "/sector_observations": {
+      "schema": "SectorObservation",
+      "description": "Coleção de observações rápidas do setor."
+    }
+  }
+}

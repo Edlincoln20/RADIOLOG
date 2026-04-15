@@ -1,0 +1,6 @@
+{
+  "name": "RadioLog - Gestão de Radiologia",
+  "description": "Sistema completo para monitoramento de temperatura, pressão e hélio, além de gestão de manutenções preventivas e relatórios para setores de radiologia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
