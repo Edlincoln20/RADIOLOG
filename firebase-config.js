@@ -1,9 +1,0 @@
-export const firebaseConfig = {
-  apiKey: "AIzaSyDhzj96fwhsRhQgabWWFpjAeq9RF4iwgU8",
-  authDomain: "radiolog-80fab.firebaseapp.com",
-  projectId: "radiolog-80fab",
-  storageBucket: "radiolog-80fab.firebasestorage.app",
-  messagingSenderId: "710618176713",
-  appId: "1:710618176713:web:a199728cacb4b00cc9c118",
-  measurementId: "G-RJ8GYCRKTR"
-};
