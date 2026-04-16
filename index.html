@@ -8,7 +8,40 @@
   </head>
   <body>
     <div id="root"></div>
-    
+    <script type="module">
+  // Importar o Firebase de um servidor online (CDN)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // CONFIGURAÇÃO DO SEU PROJETO (Copie do Console do Firebase)
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU-PROJETO.firebaseapp.com",
+    projectId: "SEU-PROJETO",
+    storageBucket: "SEU-PROJETO.appspot.com",
+    messagingSenderId: "000000000000",
+    appId: "1:000000000000:web:abc123"
+  };
+
+  // Inicializar
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Exemplo: Função para salvar no banco quando clicar num botão
+  window.salvarNoFirebase = async function() {
+    const texto = document.getElementById('seuInputDeTexto').value;
+    try {
+      await addDoc(collection(db, "notas"), {
+        texto: texto,
+        timestamp: new Date()
+      });
+      alert("Anotado na nuvem!");
+    } catch (e) {
+      console.error("Erro: ", e);
+    }
+  }
+</script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
